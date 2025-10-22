@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Guitar Note Recognition Exercise</title>
+  <style>
+    :root { --bg:#0f1220; --panel:#171a2b; --accent:#6ea8fe; --text:#eef2ff; --muted:#b6c0de; --good:#4ade80; --warn:#f59e0b; --danger:#f87171; }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:linear-gradient(180deg,#0f1220,#0b0f1a); color:var(--text); }
+    header{ position:sticky; top:0; z-index:50; padding:24px 20px 8px; text-align:center; background:#0f1220; border-bottom:1px solid rgba(255,255,255,0.08); box-shadow:0 6px 18px rgba(0,0,0,0.35); }
+    h1{ margin:0; font-size:24px; letter-spacing:0.3px; }
+    .app{ max-width:980px; margin:0 auto; padding:16px; display:grid; grid-template-columns:340px 1fr; gap:16px; }
+    .card{ background:var(--panel); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:16px; box-shadow:0 8px 24px rgba(0,0,0,0.35); }
+    .card h2{ margin:0 0 8px; font-size:16px; color:var(--muted); font-weight:600; }
+    textarea{ width:100%; min-height:320px; resize:vertical; background:#0d1020; color:var(--text); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px; line-height:1.5; }
+    label{ display:block; font-size:13px; color:var(--muted); margin-top:10px; }
+    select,input[type="number"]{ width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:#0d1020; color:var(--text); }
+    .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .controls{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-top:12px; }
+    button{ padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:#0d1020; color:var(--text); cursor:pointer; }
+    button.primary{ background:var(--accent); color:#0b1020; border:none; font-weight:700; }
+    button.success{ background:var(--good); color:#0b1020; border:none; font-weight:700; }
+    button.danger{ background:var(--danger); color:#0b1020; border:none; font-weight:700; }
+    .stack{ display:grid; gap:8px; }
+    .mini{ font-size:12px; color:var(--muted); }
+    .now{ font-size:24px; font-weight:800; margin:8px 0; white-space:pre-wrap; }
+    .queue{ max-height:260px; overflow:auto; border-radius:12px; border:1px solid rgba(255,255,255,0.08); }
+    .queue li{ list-style:none; margin:0; padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.06); color:var(--muted); }
+    .queue li.active{ color:var(--text); background:rgba(110,168,254,0.12); }
+    .kbd{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Courier New",monospace; background:#0d1020; padding:1px 6px; border-radius:6px; border:1px solid rgba(255,255,255,0.12); }
+    footer{ text-align:center; padding:10px 0 24px; color:var(--muted); font-size:12px; }
+    details.dev { margin-top: 10px; }
+    details.dev summary { cursor: pointer; color: var(--muted); }
+    details.dev pre { background:#0d1020; padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,0.08); max-height:180px; overflow:auto; }
+    .badge { padding:2px 8px; border-radius:999px; font-size:11px; display:inline-block; }
+    .pass { background:#093; }
+    .fail { background:#933; }
+    /* Hero controls under the headline */
+    .hero-controls { display:flex; justify-content:center; gap:12px; margin:12px 0 6px; }
+    .hero-controls .big { font-size:18px; font-weight:800; padding:14px 22px; border-radius:14px; }
+    .hero-controls .big:active { transform: translateY(1px); }
+      @media (max-width: 720px) {
+      .hero-controls { flex-wrap: wrap; gap:10px; }
+      .hero-controls .big { flex:1 1 140px; width:100%; }
+      .app { grid-template-columns: 1fr; }
+      .hero-controls { flex-wrap: wrap; gap:10px; }
+      .hero-controls .big { flex:1 1 140px; width:100%; }
+      .app { grid-template-columns: 1fr; }
+      .card.vt { order: 1; }
+      .card.list { order: 2; }
+    }
+      .card.vt { order: 1; }
+      .card.list { order: 2; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Guitar Note Recognition Exercise</h1>
+    <p class="mini">Hit start, then play the spoken note on your guitar. As you get better, you can speed up the rate. If the voice sounds weird on your browser, choose another voice until you find a good one. You can also tick the box to have it speak each note twice. If you're having any issues on iOS or Safari, see the notes at the bottom.</p>
+    <div class="hero-controls">
+      <button id="startTop" class="primary big" aria-label="Start exercise">Start ▶</button>
+      <button id="stopTop" class="danger big" aria-label="Stop exercise">Stop ■</button>
+    </div>
+  </header>
+  <main class="app">
+    <section class="card list">
+      <h2>List</h2>
+      <textarea id="list" placeholder="Example:
+F# on E string
+Bb on A string
+C on D string
+..."></textarea>
+      <label><input type="checkbox" id="shuffle" checked /> Always randomized</label>
+      <label><input type="checkbox" id="loop" /> Loop list</label>
+      
+      <div class="row" style="margin-top:10px; grid-template-columns:1fr;">
+        <button id="regenBtn" class="warn">Regenerate list</button>
+      </div>
+      <p class="mini">Your list auto saves in this browser.</p>
+    </section>
+
+    <section class="card vt">
+      <h2>Voice and Timing</h2>
+      <div class="row">
+        <div class="stack">
+          <label for="voice">Voice</label>
+          <select id="voice"></select>
+        </div>
+        <div class="stack"></div>
+      </div>
+      <div class="row">
+        <div class="stack">
+          <label for="pauseSec">Rate of notes (seconds between)</label>
+          <div class="row" style="grid-template-columns: 1fr auto auto; gap:8px;">
+            <input id="pauseSec" type="number" min="0" value="5" step="0.1" />
+            <button id="pauseDec" title="Decrease by 0.5">–0.5</button>
+            <button id="pauseInc" title="Increase by 0.5">+0.5</button>
+          </div>
+          <label><input type="checkbox" id="repeatEach" /> speak each note twice</label>
+        </div>
+        <div class="stack">
+          <label>&nbsp;</label>
+          <div class="mini">Shortcuts: <span class="kbd">S</span> start, <span class="kbd">P</span> pause, <span class="kbd">R</span> resume, <span class="kbd">X</span> stop.</div>
+        </div>
+      </div>
+      </div>
+
+      <div class="controls">
+        <button id="start" class="primary">Start ▶</button>
+        <button id="pauseBtn">Pause ❚❚</button>
+        <button id="resumeBtn" class="success">Resume ►</button>
+        <button id="stopBtn" class="danger">Stop ■</button>
+      </div>
+
+      <div class="stack" style="margin-top:12px;">
+        <div class="mini">Status</div>
+        <div id="status" class="now">Idle</div>
+      </div>
+
+      <h2 style="margin-top:14px;">Queue</h2>
+      <ol id="queue" class="queue"></ol>
+
+      <details class="dev">
+        <summary>Self‑check (dev)</summary>
+        <div id="testSummary" class="mini"></div>
+        <pre id="testLog"></pre>
+      </details>
+    </section>
+  </main>
+  <footer>
+  <div class="mini">Based on a practice concept from the book "Vaideology" by Steve Vai.</div>
+  Built for focused ear training on note names and string positions.
+  <div class="mini" style="margin-top:6px; text-align:left; max-width:980px; margin-left:auto; margin-right:auto;">
+    <strong>Safari / iOS notes:</strong>
+    <ul class="mini" style="margin:4px 0 0 18px; padding:0;">
+      <li>Tap <b>Start</b> once to allow audio (Safari blocks speech until user interaction).</li>
+      <li>If you hear nothing: ensure the device isn’t muted and check Focus modes. On macOS Safari, set <em>Settings → Websites → Auto‑Play</em> to <em>Allow All Auto‑Play</em>.</li>
+      <li>If the first note is skipped, just tap <b>Start</b> again.</li>
+      <li>Give the voice list a moment to load, or choose another voice if it sounds odd.</li>
+    </ul>
+  </div>
+</footer>
+
+  <script>
+    const listEl = document.getElementById('list');
+    const voiceEl = document.getElementById('voice');
+    const pauseSecEl = document.getElementById('pauseSec');
+    const pauseDecBtn = document.getElementById('pauseDec');
+    const pauseIncBtn = document.getElementById('pauseInc');
+    const loopEl = document.getElementById('loop');
+    const repeatEachEl = document.getElementById('repeatEach');
+    const queueEl = document.getElementById('queue');
+    const statusEl = document.getElementById('status');
+
+    const startBtn = document.getElementById('start');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const regenBtn = document.getElementById('regenBtn');
+    const shuffleEl = document.getElementById('shuffle');
+    const startTop = document.getElementById('startTop');
+    const stopTop = document.getElementById('stopTop');
+
+    // Persistence
+    const storageKey = 'guitar-note-caller-list-v1';
+    function saveList(){ localStorage.setItem(storageKey, listEl.value); }
+    function loadList(){ const v = localStorage.getItem(storageKey); if (v) listEl.value = v; }
+    loadList();
+
+    // Voices
+    function loadVoices(){
+      const voices = window.speechSynthesis.getVoices();
+      voiceEl.innerHTML = '';
+      const preferred = voices.filter(v => /en/i.test(v.lang));
+      const set = preferred.length ? preferred : voices;
+      set.forEach((v)=>{ const opt = document.createElement('option'); opt.value = v.name; opt.textContent = `${v.name} (${v.lang})`; voiceEl.appendChild(opt); });
+      if (set.length) voiceEl.value = set[0].name;
+    }
+    window.speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
+
+    // --- Full list generators (standard tuning, frets 0–12) ---
+    function generateOrderedFullList(){
+      const tuning = [
+        {name:'E', midi:40}, // E2
+        {name:'A', midi:45},
+        {name:'D', midi:50},
+        {name:'G', midi:55},
+        {name:'B', midi:59},
+        {name:'E', midi:64}  // E4
+      ];
+      const pref = { 'C#':'Db','D#':'Eb','F#':'F#','G#':'Ab','A#':'Bb' };
+      const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+      const stringLabels = ['E','A','D','G','B','E'];
+      const toName = (semitone)=>{ const n = names[semitone]; return pref[n] || n; };
+      const noteName = (midi)=>{ const s = (midi - 12) % 12; return toName((s+12)%12); };
+      const lines = [];
+      for (let s = 0; s < tuning.length; s++){
+        const open = tuning[s].midi;
+        for (let fret = 0; fret <= 12; fret++){
+          const name = noteName(open + fret);
+          lines.push(`${name} on ${stringLabels[s]} string`);
+        }
+      }
+      return lines;
+    }
+    function generateDefaultList(){
+      const lines = generateOrderedFullList();
+      const a = lines.slice();
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      return a.join('\n');
+    }
+
+    // Queue and player
+    let queue = []; let idx = -1; let speaking = false; let paused = false; let pendingTimer = null;
+
+    function buildQueue(){
+      const lines = listEl.value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      queue = (shuffleEl && shuffleEl.checked) ? shuffle(lines) : lines.slice();
+      renderQueue(); idx = -1;
+    }
+    function renderQueue(){
+      queueEl.innerHTML='';
+      queue.forEach((item,i)=>{
+        const li=document.createElement('li');
+        li.textContent=item;
+        if(i===idx) li.classList.add('active');
+        queueEl.appendChild(li);
+      });
+    }
+
+    // Robust speech formatter
+    function formatSpeech(text){
+      let t = text;
+      // Expand accidentals first (callbacks avoid editor backrefs)
+      t = t.replace(/([A-G])[#♯]/g, (_m, p1) => p1 + ' sharp'); // F# => F sharp
+      t = t.replace(/([A-G])[b♭]/g, (_m, p1) => p1 + ' flat');  // Bb => B flat
+      // Force leading bare "A" to be read as the letter (not the article)
+      // Applies to: "A flat", "A sharp", "A on …", or lone "A"
+      t = t.replace(/^A(?=\s|$)/, 'A.');
+      return t;
+    }
+
+    function speak(text){
+      const utter = new SpeechSynthesisUtterance(formatSpeech(text));
+      const voice = speechSynthesis.getVoices().find(v=> v.name === voiceEl.value);
+      if (voice) utter.voice = voice;
+      utter.rate = 0.75; // fixed rate
+      return new Promise(resolve => {
+        utter.onend = resolve;
+        utter.onerror = resolve;
+        speechSynthesis.speak(utter);
+      });
+    }
+
+    async function playFrom(startIndex=0){
+      buildQueue(); if(!queue.length){ status('Nothing to read'); return; }
+      speaking = true; paused = false; idx = startIndex - 1; status('Starting');
+      while(speaking){
+        idx++; if(idx >= queue.length){ if(loopEl.checked){ idx=0; } else { break; } }
+        renderQueue(); const line = queue[idx]; status(`Now: ${line}`);
+        await speak(line); if(!speaking) break;
+        if(repeatEachEl.checked){ await sleep(200); await speak(line); }
+        await waitForPause(); if(!speaking) break;
+      }
+      status('Idle'); speaking=false; idx=-1; renderQueue();
+    }
+
+    function waitForPause(){
+      return new Promise(resolve=>{
+        const secs = Number(pauseSecEl.value || 0); const ms = Math.max(0, secs*1000);
+        pendingTimer = setTimeout(()=>{ resolve(); }, ms);
+      });
+    }
+    function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+    function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+    function status(t){ statusEl.textContent=t; }
+
+    // Controls
+    startBtn.onclick = ()=>{ if(!speaking) playFrom(0); };
+    pauseBtn.onclick = ()=>{ if(speaking && !paused){ speechSynthesis.pause(); paused=true; status('Paused'); } };
+    resumeBtn.onclick = ()=>{ if(speaking && paused){ speechSynthesis.resume(); paused=false; status(`Resumed: ${queue[idx]||''}`); } };
+    function safeStop(){
+      speaking=false; paused=false; speechSynthesis.cancel();
+      if(pendingTimer){ clearTimeout(pendingTimer); pendingTimer=null; }
+      status('Stopped');
+    }
+    stopBtn.onclick = ()=> safeStop();
+    if (startTop) startTop.onclick = ()=>{ if(!speaking) playFrom(0); };
+    if (stopTop) stopTop.onclick = ()=> safeStop();
+
+    // Autosave and rebuild
+    listEl.addEventListener('input', ()=>{ saveList(); buildQueue(); });
+
+    if (shuffleEl) shuffleEl.addEventListener('change', buildQueue);
+
+    // Regenerate list button
+    regenBtn.onclick = ()=>{
+      safeStop();
+      listEl.value = generateDefaultList();
+      saveList();
+      buildQueue();
+      status('New randomized list ready');
+    };
+
+    // Pause +/- controls
+    function setPause(val){ const v = Math.max(0, Number(val) || 0); pauseSecEl.value = v.toFixed(1); }
+    if (pauseDecBtn && pauseIncBtn) {
+      pauseDecBtn.onclick = () => setPause(Number(pauseSecEl.value) - 0.5);
+      pauseIncBtn.onclick = () => setPause(Number(pauseSecEl.value) + 0.5);
+    }
+
+    // Shortcuts
+    window.addEventListener('keydown', (e)=>{
+      if(e.target.closest('input, textarea, select')) return;
+      const k=e.key.toLowerCase();
+      if(k==='s') startBtn.click();
+      if(k==='p') pauseBtn.click();
+      if(k==='r') resumeBtn.click();
+      if(k==='x') stopBtn.click();
+    });
+
+    // Init: prepopulate with a randomized default list if none is saved
+    const versionKey = 'guitar-note-caller-list-version';
+    if(!listEl.value.trim()){
+      listEl.value = generateDefaultList();
+      localStorage.setItem(versionKey, 'v2-shuffled-default');
+      saveList();
+    } else {
+      // If the saved list matches the canonical ordered list, replace it once with a randomized version
+      try {
+        const ordered = generateOrderedFullList().join('\n');
+        const normalizedSaved = listEl.value.trim().replace(/\r/g,'');
+        if (normalizedSaved === ordered && localStorage.getItem(versionKey) !== 'v2-shuffled-default'){
+          listEl.value = generateDefaultList();
+          localStorage.setItem(versionKey, 'v2-shuffled-default');
+          saveList();
+        }
+      } catch(e) { /* noop */ }
+    }
+    buildQueue();
+
+    // ====== Self-checks (non-intrusive) ======
+    const testLog = document.getElementById('testLog');
+    const testSummary = document.getElementById('testSummary');
+    function log(line){ if(testLog) testLog.textContent += line + "\n"; }
+    function badge(ok){ return `<span class="badge ${ok?'pass':'fail'}">${ok?'PASS':'FAIL'}</span>`; }
+    (function runSelfChecks(){
+      if(!testLog || !testSummary) return; // guard if section removed later
+      const results = [];
+      // 1) formatSpeech sharps/flats and leading A
+      const t1 = formatSpeech('F# on E string') === 'F sharp on E string'; results.push(t1); log(`${badge(t1)} F# -> F sharp`);
+      const t2 = formatSpeech('G♭ on D string') === 'G flat on D string'; results.push(t2); log(`${badge(t2)} G♭ -> G flat`);
+      const t3 = formatSpeech('Ab on E string').startsWith('A. flat on E string'); results.push(t3); log(`${badge(t3)} Ab -> A. flat (forces letter A)`);
+      const t4 = formatSpeech('A on B string').startsWith('A. on B string'); results.push(t4); log(`${badge(t4)} A on … -> A. on …`);
+      // 2) newline splitting
+      const raw = 'A on E string\r\nBb on A string\nC# on D string';
+      const parts = raw.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      const t5 = parts.length === 3 && parts[1] === 'Bb on A string'; results.push(t5); log(`${badge(t5)} split /\\r?\\n/ handles CRLF + LF`);
+      // 3) randomization (non-deterministic): check for at least 1 different order in 10 builds
+      const origSaved = listEl.value;
+      listEl.value = 'A on E string\nBb on A string\nC# on D string';
+      let different = false; let last = null;
+      for(let i=0;i<10;i++){ buildQueue(); const cur = queue.join('|'); if(last && cur!==last) { different = true; break; } last = cur; }
+      const t6 = different; results.push(t6); log(`${badge(t6)} buildQueue randomizes order`);
+      // 4) default list generator returns many lines and proper \n
+      const sample = generateDefaultList();
+      const lines = sample.split(/\r?\n/);
+      const t7 = typeof sample === 'string' && lines.length >= 60; results.push(t7); log(`${badge(t7)} default list length ok (${lines.length} lines)`);
+      const t8 = sample.indexOf('\r') === -1; results.push(t8); log(`${badge(t8)} default list uses \n only (no CR)`);
+      testSummary.innerHTML = `${results.every(Boolean) ? 'All self‑checks passed' : 'Some checks failed'} (${results.filter(Boolean).length}/${results.length})`;
+      // restore the user's list
+      listEl.value = origSaved; buildQueue();
+    })();
+  </script>
+</body>
+</html>

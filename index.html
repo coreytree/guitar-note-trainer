@@ -17,9 +17,8 @@
     label{ display:block; font-size:13px; color:var(--muted); margin-top:10px; }
     select,input[type="number"]{ width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:#0d1020; color:var(--text); }
     .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .controls{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-top:12px; }
     button{ padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:#0d1020; color:var(--text); cursor:pointer; }
-    button.primary{ background:var(--accent); color:#0b1020; border:none; font-weight:700; }
+    button.primary{ background:var(--accent); color:#0b1020; border:1px solid transparent; font-weight:700; box-shadow:none; }
     button.success{ background:var(--good); color:#0b1020; border:none; font-weight:700; }
     button.danger{ background:var(--danger); color:#0b1020; border:none; font-weight:700; }
     .stack{ display:grid; gap:8px; }
@@ -36,20 +35,23 @@
     .badge { padding:2px 8px; border-radius:999px; font-size:11px; display:inline-block; }
     .pass { background:#093; }
     .fail { background:#933; }
+    .status-top { font-size:32px; font-weight:900; margin:10px 0 4px; white-space:pre-wrap; }
     /* Hero controls under the headline */
     .hero-controls { display:flex; justify-content:center; gap:12px; margin:12px 0 6px; }
     .hero-controls .big { font-size:18px; font-weight:800; padding:14px 22px; border-radius:14px; }
     .hero-controls .big:active { transform: translateY(1px); }
-      @media (max-width: 720px) {
+    /* Rock-ish visuals */
+    
+    button.primary{ background:var(--accent); color:#0b1020; border:none; font-weight:700; box-shadow: var(--accent-glow); }
+    
+    .status-top { font-size:32px; font-weight:900; margin:10px 0 4px; white-space:pre-wrap; }
+    
+    
+    
+    $1@media (max-width: 720px) {
       .hero-controls { flex-wrap: wrap; gap:10px; }
       .hero-controls .big { flex:1 1 140px; width:100%; }
       .app { grid-template-columns: 1fr; }
-      .hero-controls { flex-wrap: wrap; gap:10px; }
-      .hero-controls .big { flex:1 1 140px; width:100%; }
-      .app { grid-template-columns: 1fr; }
-      .card.vt { order: 1; }
-      .card.list { order: 2; }
-    }
       .card.vt { order: 1; }
       .card.list { order: 2; }
     }
@@ -58,29 +60,14 @@
 <body>
   <header>
     <h1>Guitar Note Recognition Exercise</h1>
+    <div id="status" class="status-top">Idle</div>
     <p class="mini">Hit start, then play the spoken note on your guitar. As you get better, you can speed up the rate. If the voice sounds weird on your browser, choose another voice until you find a good one. You can also tick the box to have it speak each note twice. If you're having any issues on iOS or Safari, see the notes at the bottom.</p>
     <div class="hero-controls">
-      <button id="startTop" class="primary big" aria-label="Start exercise">Start ▶</button>
+      <button id="startTop" class="primary big" aria-label="Play exercise">Play ▶</button>
       <button id="stopTop" class="danger big" aria-label="Stop exercise">Stop ■</button>
     </div>
   </header>
   <main class="app">
-    <section class="card list">
-      <h2>List</h2>
-      <textarea id="list" placeholder="Example:
-F# on E string
-Bb on A string
-C on D string
-..."></textarea>
-      <label><input type="checkbox" id="shuffle" checked /> Always randomized</label>
-      <label><input type="checkbox" id="loop" /> Loop list</label>
-      
-      <div class="row" style="margin-top:10px; grid-template-columns:1fr;">
-        <button id="regenBtn" class="warn">Regenerate list</button>
-      </div>
-      <p class="mini">Your list auto saves in this browser.</p>
-    </section>
-
     <section class="card vt">
       <h2>Voice and Timing</h2>
       <div class="row">
@@ -90,58 +77,56 @@ C on D string
         </div>
         <div class="stack"></div>
       </div>
-      <div class="row">
+      <label><input type="checkbox" id="repeatEach" /> speak each note twice</label>
+      <div class="row" style="grid-template-columns: 1fr;">
         <div class="stack">
           <label for="pauseSec">Rate of notes (seconds between)</label>
-          <div class="row" style="grid-template-columns: 1fr auto auto; gap:8px;">
-            <input id="pauseSec" type="number" min="0" value="5" step="0.1" />
-            <button id="pauseDec" title="Decrease by 0.5">–0.5</button>
-            <button id="pauseInc" title="Increase by 0.5">+0.5</button>
+          <div class="row" style="grid-template-columns: minmax(160px, 1fr) auto auto; gap:10px; align-items:center;">
+            <input id="pauseSec" type="number" min="0" value="5" step="0.1" style="height:38px; font-size:15px;" />
+            <button id="pauseDec" title="Decrease by 0.5" style="min-width:68px;">–0.5</button>
+            <button id="pauseInc" title="Increase by 0.5" style="min-width:68px;">+0.5</button>
           </div>
-          <label><input type="checkbox" id="repeatEach" /> speak each note twice</label>
         </div>
-        <div class="stack">
-          <label>&nbsp;</label>
-          <div class="mini">Shortcuts: <span class="kbd">S</span> start, <span class="kbd">P</span> pause, <span class="kbd">R</span> resume, <span class="kbd">X</span> stop.</div>
-        </div>
-      </div>
-      </div>
-
-      <div class="controls">
-        <button id="start" class="primary">Start ▶</button>
-        <button id="pauseBtn">Pause ❚❚</button>
-        <button id="resumeBtn" class="success">Resume ►</button>
-        <button id="stopBtn" class="danger">Stop ■</button>
-      </div>
-
-      <div class="stack" style="margin-top:12px;">
-        <div class="mini">Status</div>
-        <div id="status" class="now">Idle</div>
       </div>
 
       <h2 style="margin-top:14px;">Queue</h2>
       <ol id="queue" class="queue"></ol>
 
       <details class="dev">
-        <summary>Self‑check (dev)</summary>
+        <summary>Self-check (dev)</summary>
         <div id="testSummary" class="mini"></div>
         <pre id="testLog"></pre>
       </details>
     </section>
+
+    <section class="card list">
+      <h2>List</h2>
+      <textarea id="list" placeholder="Example:
+F# on E string
+Bb on A string
+C on D string
+..."></textarea>
+      <label><input type="checkbox" id="shuffle" checked /> Always randomized</label>
+      <label><input type="checkbox" id="loop" /> Loop list</label>
+      <div class="row" style="margin-top:10px; grid-template-columns:1fr;">
+        <button id="regenBtn" class="warn">Regenerate list</button>
+      </div>
+      <p class="mini">Your list auto saves in this browser.</p>
+    </section>
   </main>
   <footer>
-  <div class="mini">Based on a practice concept from the book "Vaideology" by Steve Vai.</div>
-  Built for focused ear training on note names and string positions.
-  <div class="mini" style="margin-top:6px; text-align:left; max-width:980px; margin-left:auto; margin-right:auto;">
-    <strong>Safari / iOS notes:</strong>
-    <ul class="mini" style="margin:4px 0 0 18px; padding:0;">
-      <li>Tap <b>Start</b> once to allow audio (Safari blocks speech until user interaction).</li>
-      <li>If you hear nothing: ensure the device isn’t muted and check Focus modes. On macOS Safari, set <em>Settings → Websites → Auto‑Play</em> to <em>Allow All Auto‑Play</em>.</li>
-      <li>If the first note is skipped, just tap <b>Start</b> again.</li>
-      <li>Give the voice list a moment to load, or choose another voice if it sounds odd.</li>
-    </ul>
-  </div>
-</footer>
+    <div class="mini">Based on a practice concept from the book "Vaideology" by Steve Vai.</div>
+    Built for focused ear training on note names and string positions.
+    <div class="mini" style="margin-top:6px; text-align:left; max-width:980px; margin-left:auto; margin-right:auto;">
+      <strong>Safari / iOS notes:</strong>
+      <ul class="mini" style="margin:4px 0 0 18px; padding:0;">
+        <li>Tap <b>Start</b> once to allow audio (Safari blocks speech until user interaction).</li>
+        <li>If you hear nothing: ensure the device isn’t muted and check Focus modes. On macOS Safari, set <em>Settings → Websites → Auto-Play</em> to <em>Allow All Auto-Play</em>.</li>
+        <li>If the first note is skipped, just tap <b>Start</b> again.</li>
+        <li>Give the voice list a moment to load, or choose another voice if it sounds odd.</li>
+      </ul>
+    </div>
+  </footer>
 
   <script>
     const listEl = document.getElementById('list');
@@ -154,10 +139,6 @@ C on D string
     const queueEl = document.getElementById('queue');
     const statusEl = document.getElementById('status');
 
-    const startBtn = document.getElementById('start');
-    const pauseBtn = document.getElementById('pauseBtn');
-    const resumeBtn = document.getElementById('resumeBtn');
-    const stopBtn = document.getElementById('stopBtn');
     const regenBtn = document.getElementById('regenBtn');
     const shuffleEl = document.getElementById('shuffle');
     const startTop = document.getElementById('startTop');
@@ -213,7 +194,7 @@ C on D string
     }
 
     // Queue and player
-    let queue = []; let idx = -1; let speaking = false; let paused = false; let pendingTimer = null;
+    let queue = []; let idx = -1; let speaking = false; let paused = false; let pendingTimer = null; let repeatEcho = false;
 
     function buildQueue(){
       const lines = listEl.value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
@@ -230,15 +211,12 @@ C on D string
       });
     }
 
-    // Robust speech formatter
+    // Speech formatter
     function formatSpeech(text){
       let t = text;
-      // Expand accidentals first (callbacks avoid editor backrefs)
       t = t.replace(/([A-G])[#♯]/g, (_m, p1) => p1 + ' sharp'); // F# => F sharp
       t = t.replace(/([A-G])[b♭]/g, (_m, p1) => p1 + ' flat');  // Bb => B flat
-      // Force leading bare "A" to be read as the letter (not the article)
-      // Applies to: "A flat", "A sharp", "A on …", or lone "A"
-      t = t.replace(/^A(?=\s|$)/, 'A.');
+      t = t.replace(/^A(?=\s|$)/, 'A.'); // force letter A
       return t;
     }
 
@@ -255,16 +233,19 @@ C on D string
     }
 
     async function playFrom(startIndex=0){
-      buildQueue(); if(!queue.length){ status('Nothing to read'); return; }
-      speaking = true; paused = false; idx = startIndex - 1; status('Starting');
+      buildQueue(); if(!queue.length){ status('Nothing to read'); updatePlayBtn(); return; }
+      speaking = true; paused = false; idx = startIndex - 1; status('Starting'); updatePlayBtn();
       while(speaking){
         idx++; if(idx >= queue.length){ if(loopEl.checked){ idx=0; } else { break; } }
-        renderQueue(); const line = queue[idx]; status(`Now: ${line}`);
+        renderQueue(); const line = queue[idx]; status(`Play: ${line}`);
         await speak(line); if(!speaking) break;
-        if(repeatEachEl.checked){ await sleep(200); await speak(line); }
         await waitForPause(); if(!speaking) break;
+        if(repeatEachEl.checked){
+          if(!repeatEcho){ repeatEcho = true; idx--; continue; }
+          else { repeatEcho = false; }
+        }
       }
-      status('Idle'); speaking=false; idx=-1; renderQueue();
+      status('Idle'); speaking=false; idx=-1; renderQueue(); updatePlayBtn();
     }
 
     function waitForPause(){
@@ -275,24 +256,31 @@ C on D string
     }
     function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
     function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-    function status(t){ statusEl.textContent=t; }
+    function status(t){ statusEl.textContent = t; }
 
-    // Controls
-    startBtn.onclick = ()=>{ if(!speaking) playFrom(0); };
-    pauseBtn.onclick = ()=>{ if(speaking && !paused){ speechSynthesis.pause(); paused=true; status('Paused'); } };
-    resumeBtn.onclick = ()=>{ if(speaking && paused){ speechSynthesis.resume(); paused=false; status(`Resumed: ${queue[idx]||''}`); } };
+    // Header controls: Play/Pause toggle + Stop
+    function updatePlayBtn(){
+      if(!startTop) return;
+      const isPlaying = speaking && !paused;
+      startTop.textContent = isPlaying ? 'Pause ❚❚' : 'Play ▶';
+      startTop.setAttribute('aria-label', isPlaying ? 'Pause exercise' : 'Play exercise');
+    }
+    function togglePlay(){
+      if(!speaking){ playFrom(0); updatePlayBtn(); return; }
+      if(paused){ speechSynthesis.resume(); paused=false; status(`Resumed: ${queue[idx]||''}`); updatePlayBtn(); }
+      else { speechSynthesis.pause(); paused=true; status('Paused'); updatePlayBtn(); }
+    }
+    if (startTop) startTop.onclick = () => togglePlay();
+    if (stopTop)  stopTop.onclick  = () => safeStop();
+
     function safeStop(){
       speaking=false; paused=false; speechSynthesis.cancel();
       if(pendingTimer){ clearTimeout(pendingTimer); pendingTimer=null; }
-      status('Stopped');
+      status('Stopped'); updatePlayBtn();
     }
-    stopBtn.onclick = ()=> safeStop();
-    if (startTop) startTop.onclick = ()=>{ if(!speaking) playFrom(0); };
-    if (stopTop) stopTop.onclick = ()=> safeStop();
 
     // Autosave and rebuild
     listEl.addEventListener('input', ()=>{ saveList(); buildQueue(); });
-
     if (shuffleEl) shuffleEl.addEventListener('change', buildQueue);
 
     // Regenerate list button
@@ -311,14 +299,13 @@ C on D string
       pauseIncBtn.onclick = () => setPause(Number(pauseSecEl.value) + 0.5);
     }
 
-    // Shortcuts
+    // Shortcuts: Space/S = Play/Pause, X = Stop
     window.addEventListener('keydown', (e)=>{
-      if(e.target.closest('input, textarea, select')) return;
+      if(e.target.closest('input, textarea, select, button')) return;
+      if(e.code === 'Space'){ e.preventDefault(); togglePlay(); return; }
       const k=e.key.toLowerCase();
-      if(k==='s') startBtn.click();
-      if(k==='p') pauseBtn.click();
-      if(k==='r') resumeBtn.click();
-      if(k==='x') stopBtn.click();
+      if(k==='s'){ e.preventDefault(); togglePlay(); }
+      if(k==='x'){ e.preventDefault(); safeStop(); }
     });
 
     // Init: prepopulate with a randomized default list if none is saved
@@ -340,6 +327,7 @@ C on D string
       } catch(e) { /* noop */ }
     }
     buildQueue();
+    updatePlayBtn();
 
     // ====== Self-checks (non-intrusive) ======
     const testLog = document.getElementById('testLog');
@@ -349,28 +337,23 @@ C on D string
     (function runSelfChecks(){
       if(!testLog || !testSummary) return; // guard if section removed later
       const results = [];
-      // 1) formatSpeech sharps/flats and leading A
       const t1 = formatSpeech('F# on E string') === 'F sharp on E string'; results.push(t1); log(`${badge(t1)} F# -> F sharp`);
       const t2 = formatSpeech('G♭ on D string') === 'G flat on D string'; results.push(t2); log(`${badge(t2)} G♭ -> G flat`);
       const t3 = formatSpeech('Ab on E string').startsWith('A. flat on E string'); results.push(t3); log(`${badge(t3)} Ab -> A. flat (forces letter A)`);
       const t4 = formatSpeech('A on B string').startsWith('A. on B string'); results.push(t4); log(`${badge(t4)} A on … -> A. on …`);
-      // 2) newline splitting
       const raw = 'A on E string\r\nBb on A string\nC# on D string';
       const parts = raw.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
       const t5 = parts.length === 3 && parts[1] === 'Bb on A string'; results.push(t5); log(`${badge(t5)} split /\\r?\\n/ handles CRLF + LF`);
-      // 3) randomization (non-deterministic): check for at least 1 different order in 10 builds
       const origSaved = listEl.value;
       listEl.value = 'A on E string\nBb on A string\nC# on D string';
       let different = false; let last = null;
       for(let i=0;i<10;i++){ buildQueue(); const cur = queue.join('|'); if(last && cur!==last) { different = true; break; } last = cur; }
       const t6 = different; results.push(t6); log(`${badge(t6)} buildQueue randomizes order`);
-      // 4) default list generator returns many lines and proper \n
       const sample = generateDefaultList();
       const lines = sample.split(/\r?\n/);
       const t7 = typeof sample === 'string' && lines.length >= 60; results.push(t7); log(`${badge(t7)} default list length ok (${lines.length} lines)`);
-      const t8 = sample.indexOf('\r') === -1; results.push(t8); log(`${badge(t8)} default list uses \n only (no CR)`);
-      testSummary.innerHTML = `${results.every(Boolean) ? 'All self‑checks passed' : 'Some checks failed'} (${results.filter(Boolean).length}/${results.length})`;
-      // restore the user's list
+      const t8 = sample.indexOf('\r') === -1; results.push(t8); log(`${badge(t8)} default list uses \\n only (no CR)`);
+      testSummary.innerHTML = `${results.every(Boolean) ? 'All self-checks passed' : 'Some checks failed'} (${results.filter(Boolean).length}/${results.length})`;
       listEl.value = origSaved; buildQueue();
     })();
   </script>

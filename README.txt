@@ -1,7 +1,7 @@
 # Guitar Note Recognition Exercise
 
 A single-file, client-side web app for practicing rapid note recognition on guitar.  
-Hit **Start**, listen to the spoken note (with string), and play it. As you improve, speed up the rate.
+Hit **Play**, listen to the spoken note (with string), and play it. As you improve, speed up the rate.
 
 > If you're having any issues on **iOS / Safari**, see the notes below.
 

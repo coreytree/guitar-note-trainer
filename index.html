@@ -18,12 +18,11 @@
     select,input[type="number"]{ width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:#0d1020; color:var(--text); }
     .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     button{ padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:#0d1020; color:var(--text); cursor:pointer; }
-    button.primary{ background:var(--accent); color:#0b1020; border:1px solid transparent; font-weight:700; box-shadow:none; }
+    button.primary{ background:var(--accent); color:#0b1020; border:1px solid transparent; font-weight:700; }
     button.success{ background:var(--good); color:#0b1020; border:none; font-weight:700; }
     button.danger{ background:var(--danger); color:#0b1020; border:none; font-weight:700; }
     .stack{ display:grid; gap:8px; }
     .mini{ font-size:12px; color:var(--muted); }
-    .now{ font-size:24px; font-weight:800; margin:8px 0; white-space:pre-wrap; }
     .queue{ max-height:260px; overflow:auto; border-radius:12px; border:1px solid rgba(255,255,255,0.08); }
     .queue li{ list-style:none; margin:0; padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.06); color:var(--muted); }
     .queue li.active{ color:var(--text); background:rgba(110,168,254,0.12); }
@@ -35,20 +34,18 @@
     .badge { padding:2px 8px; border-radius:999px; font-size:11px; display:inline-block; }
     .pass { background:#093; }
     .fail { background:#933; }
+
     .status-top { font-size:32px; font-weight:900; margin:10px 0 4px; white-space:pre-wrap; }
-    /* Hero controls under the headline */
     .hero-controls { display:flex; justify-content:center; gap:12px; margin:12px 0 6px; }
     .hero-controls .big { font-size:18px; font-weight:800; padding:14px 22px; border-radius:14px; }
     .hero-controls .big:active { transform: translateY(1px); }
-    /* Rock-ish visuals */
-    
-    button.primary{ background:var(--accent); color:#0b1020; border:none; font-weight:700; box-shadow: var(--accent-glow); }
-    
-    .status-top { font-size:32px; font-weight:900; margin:10px 0 4px; white-space:pre-wrap; }
-    
-    
-    
-    $1@media (max-width: 720px) {
+
+    /* String selector */
+    .string-select{ display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap; margin:6px 0 0; }
+    .string-btn{ padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.15); background:#0d1020; color:var(--text); font-size:13px; cursor:pointer; }
+    .string-btn.on{ background:var(--accent); color:#0b1020; border-color:transparent; font-weight:700; }
+
+    @media (max-width: 720px) {
       .hero-controls { flex-wrap: wrap; gap:10px; }
       .hero-controls .big { flex:1 1 140px; width:100%; }
       .app { grid-template-columns: 1fr; }
@@ -61,10 +58,17 @@
   <header>
     <h1>Guitar Note Recognition Exercise</h1>
     <div id="status" class="status-top">Idle</div>
-    <p class="mini">Hit play, then play the spoken note on your guitar. As you get better, you can speed up the rate. If the voice sounds weird on your browser, choose another voice until you find a good one. You can also tick the box to have it speak each note twice. If you're having any issues on iOS or Safari, see the notes at the bottom.</p>
+    <p class="mini">Hit play, then play the spoken note on your guitar. As you get better, you can speed up the rate. You can select the amount of time between spoken notes, choose to have each note spoken twice (repeated), and select specific strings you'd like to practice. The list is always randomized by default. Tap Regenerate list anytime for a fresh shuffle. If the voice sounds odd, try a different voice in the dropdown. On Safari or iOS, make sure you tap Play once to allow audio. Based on a practice concept from the book "Vaideology" by Steve Vai. Built for focused ear training on note names and string positions.</p>
     <div class="hero-controls">
       <button id="startTop" class="primary big" aria-label="Play exercise">Play ▶</button>
-      <button id="stopTop" class="danger big" aria-label="Stop exercise">Stop ■</button>
+      </div>
+    <div class="string-select" aria-label="Choose strings to practice">
+      <button id="sel-s1" class="string-btn">1 – E</button>
+      <button id="sel-s2" class="string-btn">2 – B</button>
+      <button id="sel-s3" class="string-btn">3 – G</button>
+      <button id="sel-s4" class="string-btn">4 – D</button>
+      <button id="sel-s5" class="string-btn">5 – A</button>
+      <button id="sel-s6" class="string-btn">6 – E</button>
     </div>
   </header>
   <main class="app">
@@ -115,8 +119,6 @@ C on D string
     </section>
   </main>
   <footer>
-    <div class="mini">Based on a practice concept from the book "Vaideology" by Steve Vai.</div>
-    Built for focused ear training on note names and string positions.
     <div class="mini" style="margin-top:6px; text-align:left; max-width:980px; margin-left:auto; margin-right:auto;">
       <strong>Safari / iOS notes:</strong>
       <ul class="mini" style="margin:4px 0 0 18px; padding:0;">
@@ -143,6 +145,23 @@ C on D string
     const shuffleEl = document.getElementById('shuffle');
     const startTop = document.getElementById('startTop');
     const stopTop = document.getElementById('stopTop');
+
+    // String selection buttons and state
+    const stringBtnIds = ['sel-s1','sel-s2','sel-s3','sel-s4','sel-s5','sel-s6'];
+    const idxToLetter = ['E','B','G','D','A','E']; // 1–E,2–B,3–G,4–D,5–A,6–E
+    const stringStorageKey = 'guitar-string-select-v1';
+    function loadStringSel(){
+      const raw = localStorage.getItem(stringStorageKey);
+      if(!raw) return [true,true,true,true,true,true];
+      const set = new Set(raw.split(',').map(n=>Number(n)));
+      return [1,2,3,4,5,6].map(n=> set.has(n));
+    }
+    let stringSelected = loadStringSel();
+    function saveStringSel(){ const on = stringSelected.map((b,i)=> b? (i+1):null).filter(Boolean); localStorage.setItem(stringStorageKey, on.join(',')); }
+    function renderStringSel(){ stringBtnIds.forEach((id,i)=>{ const el=document.getElementById(id); if(!el) return; const on = !!stringSelected[i]; el.classList.toggle('on', on); el.setAttribute('aria-pressed', on?'true':'false'); }); }
+    function ensureOneOn(){ if(!stringSelected.some(Boolean)) stringSelected = [true,true,true,true,true,true]; }
+    stringBtnIds.forEach((id,i)=>{ const el=document.getElementById(id); if(!el) return; el.addEventListener('click', ()=>{ stringSelected[i]=!stringSelected[i]; ensureOneOn(); saveStringSel(); renderStringSel(); buildQueue(); }); });
+    renderStringSel();
 
     // Persistence
     const storageKey = 'guitar-note-caller-list-v1';
@@ -196,9 +215,14 @@ C on D string
     // Queue and player
     let queue = []; let idx = -1; let speaking = false; let paused = false; let pendingTimer = null; let repeatEcho = false;
 
+    function parseStringLetter(line){ const m = /on\s+([EADGB])\s+string/i.exec(line); return m ? m[1].toUpperCase() : null; }
+    function activeLetters(){ const set = new Set(); stringSelected.forEach((on,i)=>{ if(on) set.add(idxToLetter[i]); }); return set; }
+
     function buildQueue(){
-      const lines = listEl.value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-      queue = (shuffleEl && shuffleEl.checked) ? shuffle(lines) : lines.slice();
+      let lines = listEl.value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      const letters = activeLetters();
+      const filtered = lines.filter(l=>{ const L = parseStringLetter(l); return !L || letters.has(L); });
+      queue = (shuffleEl && shuffleEl.checked) ? shuffle(filtered) : filtered.slice();
       renderQueue(); idx = -1;
     }
     function renderQueue(){

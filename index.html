@@ -45,12 +45,16 @@
     .string-btn{ padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.15); background:#0d1020; color:var(--text); font-size:13px; cursor:pointer; }
     .string-btn.on{ background:var(--accent); color:#0b1020; border-color:transparent; font-weight:700; }
 
+    /* Header help width */
+    .header-help{ max-width:820px; margin:8px auto 4px; }
+
     @media (max-width: 720px) {
       .hero-controls { flex-wrap: wrap; gap:10px; }
       .hero-controls .big { flex:1 1 140px; width:100%; }
       .app { grid-template-columns: 1fr; }
       .card.vt { order: 1; }
       .card.list { order: 2; }
+      .header-help{ font-size:11px; line-height:1.4; }
     }
   </style>
 </head>
@@ -58,10 +62,9 @@
   <header>
     <h1>Guitar Note Recognition Exercise</h1>
     <div id="status" class="status-top">Idle</div>
-    <p class="mini">Hit play, then play the spoken note on your guitar. As you get better, you can speed up the rate. You can select the amount of time between spoken notes, choose to have each note spoken twice (repeated), and select specific strings you'd like to practice. The list is always randomized by default. Tap Regenerate list anytime for a fresh shuffle. If the voice sounds odd, try a different voice in the dropdown. On Safari or iOS, make sure you tap Play once to allow audio. Based on a practice concept from the book "Vaideology" by Steve Vai. Built for focused ear training on note names and string positions.</p>
     <div class="hero-controls">
       <button id="startTop" class="primary big" aria-label="Play exercise">Play ▶</button>
-      </div>
+    </div>
     <div class="string-select" aria-label="Choose strings to practice">
       <button id="sel-s1" class="string-btn">1 – E</button>
       <button id="sel-s2" class="string-btn">2 – B</button>
@@ -70,6 +73,16 @@
       <button id="sel-s5" class="string-btn">5 – A</button>
       <button id="sel-s6" class="string-btn">6 – E</button>
     </div>
+    <p class="mini header-help">Hit play, then play the spoken note on your guitar. As you get better, you can speed up the rate. You can select the amount of time between spoken notes, choose to have each note spoken twice (repeated), and select specific strings you'd like to practice. The list is always randomized by default. Tap Regenerate list anytime for a fresh shuffle. If the voice sounds odd, try a different voice in the dropdown. On Safari or iOS, make sure you tap Play once to allow audio. Based on a practice concept from the book "Vaideology" by Steve Vai. Built for focused ear training on note names and string positions.</p>
+    <details class="mini header-help" style="text-align:left;">
+      <summary>Having trouble on iOS or Safari?</summary>
+      <ul class="mini" style="margin:6px 0 0 18px; padding:0;">
+        <li>Tap <b>Play</b> once to allow audio, Safari blocks speech until a user interaction.</li>
+        <li>If you hear nothing, ensure the device isn’t muted and check Focus modes. On macOS Safari, set <em>Settings → Websites → Auto-Play</em> to <em>Allow All Auto-Play</em>.</li>
+        <li>If the first note is skipped, tap <b>Play</b> again.</li>
+        <li>Give the voice list a moment to load, or choose another voice if it sounds odd.</li>
+      </ul>
+    </details>
   </header>
   <main class="app">
     <section class="card vt">
@@ -118,17 +131,7 @@ C on D string
       <p class="mini">Your list auto saves in this browser.</p>
     </section>
   </main>
-  <footer>
-    <div class="mini" style="margin-top:6px; text-align:left; max-width:980px; margin-left:auto; margin-right:auto;">
-      <strong>Safari / iOS notes:</strong>
-      <ul class="mini" style="margin:4px 0 0 18px; padding:0;">
-        <li>Tap <b>Start</b> once to allow audio (Safari blocks speech until user interaction).</li>
-        <li>If you hear nothing: ensure the device isn’t muted and check Focus modes. On macOS Safari, set <em>Settings → Websites → Auto-Play</em> to <em>Allow All Auto-Play</em>.</li>
-        <li>If the first note is skipped, just tap <b>Start</b> again.</li>
-        <li>Give the voice list a moment to load, or choose another voice if it sounds odd.</li>
-      </ul>
-    </div>
-  </footer>
+  <footer></footer>
 
   <script>
     const listEl = document.getElementById('list');

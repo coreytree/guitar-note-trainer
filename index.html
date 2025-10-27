@@ -18,7 +18,10 @@
     select,input[type="number"]{ width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:#0d1020; color:var(--text); }
     .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     button{ padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:#0d1020; color:var(--text); cursor:pointer; }
-    button.primary{ background:var(--accent); color:#0b1020; border:1px solid transparent; font-weight:700; }
+    button.primary{ background:#7CB2FF; color:#0b1020; border:1px solid transparent; font-weight:700; }
+    button.primary:hover{ background:#5FA5FF; }
+    button.primary:active{ background:#4A82CC; }
+    button.primary:focus-visible{ outline:2px solid #7CB2FF; outline-offset:2px; }
     button.success{ background:var(--good); color:#0b1020; border:none; font-weight:700; }
     button.danger{ background:var(--danger); color:#0b1020; border:none; font-weight:700; }
     .stack{ display:grid; gap:8px; }
@@ -43,7 +46,7 @@
     /* String selector */
     .string-select{ display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap; margin:6px 0 0; }
     .string-btn{ padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.15); background:#0d1020; color:var(--text); font-size:13px; cursor:pointer; }
-    .string-btn.on{ background:var(--accent); color:#0b1020; border-color:transparent; font-weight:700; }
+    .string-btn.on{ background:#B8D4FF; color:#0b1020; border-color:transparent; font-weight:700; }
 
     /* Header help width */
     .header-help{ max-width:820px; margin:8px auto 4px; }
@@ -61,7 +64,7 @@
 <body>
   <header>
     <h1>Guitar Note Recognition Exercise</h1>
-    <div id="status" class="status-top">Idle</div>
+    <div id="status" class="status-top"></div>
     <div class="hero-controls">
       <button id="startTop" class="primary big" aria-label="Play exercise">Play ▶</button>
     </div>
@@ -265,7 +268,7 @@ C on D string
       speaking = true; paused = false; idx = startIndex - 1; status('Starting'); updatePlayBtn();
       while(speaking){
         idx++; if(idx >= queue.length){ if(loopEl.checked){ idx=0; } else { break; } }
-        renderQueue(); const line = queue[idx]; status(`Play: ${line}`);
+        renderQueue(); const line = queue[idx]; status(`${line}`);
         await speak(line); if(!speaking) break;
         await waitForPause(); if(!speaking) break;
         if(repeatEachEl.checked){
@@ -273,7 +276,7 @@ C on D string
           else { repeatEcho = false; }
         }
       }
-      status('Idle'); speaking=false; idx=-1; renderQueue(); updatePlayBtn();
+      status(''); speaking=false; idx=-1; renderQueue(); updatePlayBtn();
     }
 
     function waitForPause(){
@@ -309,8 +312,8 @@ C on D string
     }
     function togglePlay(){
       if(!speaking){ playFrom(0); updatePlayBtn(); return; }
-      if(paused){ speechSynthesis.resume(); paused=false; status(`Resumed: ${queue[idx]||''}`); updatePlayBtn(); }
-      else { speechSynthesis.pause(); paused=true; status('Paused'); updatePlayBtn(); }
+      if(paused){ speechSynthesis.resume(); paused=false; status(`${queue[idx]||''}`); updatePlayBtn(); }
+      else { speechSynthesis.pause(); paused=true; status(`${queue[idx]||''}`); updatePlayBtn(); }
     }
     if (startTop) startTop.onclick = () => togglePlay();
     if (stopTop)  stopTop.onclick  = () => safeStop();
@@ -318,7 +321,7 @@ C on D string
     function safeStop(){
       speaking=false; paused=false; speechSynthesis.cancel();
       if(pendingTimer){ clearTimeout(pendingTimer); pendingTimer=null; }
-      status('Stopped'); updatePlayBtn();
+      status(''); updatePlayBtn();
     }
 
     // Autosave and rebuild

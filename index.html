@@ -66,7 +66,8 @@
       <button id="startTop" class="primary big" aria-label="Play exercise">Play ▶</button>
     </div>
     <div class="mini" style="margin-top:6px;"><strong>Select Strings to Practice (all by default)</strong></div>
-    <div class="string-select" aria-label="Choose strings to practice"><button id="sel-s1" class="string-btn">1 – E</button>
+    <div class="string-select" aria-label="Choose strings to practice">
+      <button id="sel-s1" class="string-btn">1 – E</button>
       <button id="sel-s2" class="string-btn">2 – B</button>
       <button id="sel-s3" class="string-btn">3 – G</button>
       <button id="sel-s4" class="string-btn">4 – D</button>
@@ -276,11 +277,25 @@ C on D string
     }
 
     function waitForPause(){
-      return new Promise(resolve=>{
-        const secs = Number(pauseSecEl.value || 0); const ms = Math.max(0, secs*1000);
-        pendingTimer = setTimeout(()=>{ resolve(); }, ms);
+      const secs = Number(pauseSecEl.value || 0);
+      let ms = Math.max(0, secs * 1000);
+      const tick = 50; // ms granularity so pause is responsive
+      return new Promise(async (resolve)=>{
+        while (ms > 0) {
+          if (!speaking) return resolve();
+          // If paused, wait here until resumed
+          while (paused) {
+            if (!speaking) return resolve();
+            await sleep(100);
+          }
+          const chunk = Math.min(tick, ms);
+          await sleep(chunk);
+          ms -= chunk;
+        }
+        resolve();
       });
     }
+
     function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
     function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
     function status(t){ statusEl.textContent = t; }
